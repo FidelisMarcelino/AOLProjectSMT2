@@ -3,21 +3,21 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define CHAR_SIZE 256		// mendefinisikan ukuran karakter, 256 karakter menandakan ASCII
+#define CHAR_SIZE 256		// mendefinisikan ukuran karakter, 256 karakter menandakan karakter ASCII
 int count = 1;				// Variabel untuk menghitung jumlah kata slang
-char word[101];				// Variabel untuk menyimpan kata slang
+
+//Struktur node dalam trie unutk menyimpan deskripsi kata slang
+struct descNode{			
+	char description[100];	//array untuk menyimpan deskripsi
+	struct descNode *next;	//pointer descNode untuk menunjuk ke struktur berikutnya dan membentuk link list
+							//untuk menyimpan deskripsi dari kata slang
+};
 
 //Struktur untuk trie yang menyimpan kata slang
 struct trieNode{
 	struct trieNode *children[CHAR_SIZE];	//array untuk menunjuk node
 	bool isEndOfWord;						//menandakan akhir dari sebuah kata slang
-	char desc[100];							//deskripsi dari kata slang
-};
-
-//Struktur untuk simpul trie yang menyimpan deskripsi kata slang
-struct descTrieNode{
-	struct descTrieNode *children[CHAR_SIZE];	//array untuk menunjuk anak dari deskripsi kata slang
-	bool isEndOfDesc;						//akhir dari deskripsi kata slang
+	struct descNode *descHead;				//deskripsi dari kata slang
 };
 
 //Fungsi untuk membuat dan menginisialisasi node trie kata slang
@@ -26,6 +26,7 @@ struct trieNode *createNode(){
 	
 	if(node){
 		node->isEndOfWord = false;			//set awal untuk isEndOfWord
+		node->descHead = NULL;
 		
 		//Inisialisasi semua node child menjadi NULL
 		for(int i = 0; i < CHAR_SIZE; i++){
@@ -33,29 +34,25 @@ struct trieNode *createNode(){
 		}
 	}
 	
-	return node;							//mengembalikan pointer ke node baru
+	return node;							//mengembalikan node ke node baru
 }
 
 //Fungsi untuk membuat dan menginisialisasi node trie deskripsi kata slang
-struct descTrieNode *createDescNode(){
-	struct descTrieNode *node = (struct descTrieNode*)malloc(sizeof(struct descTrieNode)); //alokasi memori untuk new node
+struct descNode *createDescNode(char *desc){
+	struct descNode *node = (struct descNode*)malloc(sizeof(struct descNode)); //alokasi memori untuk new node
+	
 	
 	if(node){
-		node->isEndOfDesc = false;			//inisialisasi nilai isEndOfDesc
-		
-		//Inisialisasi semua node child menjadi NULL		
-		for(int i = 0; i < CHAR_SIZE; i++){
-			node->children[i] = NULL;
-		}
+		strcpy(node->description, desc);	//menyalin deskripsi dalam node ke variabel deskripsi yang baru
+		node->next = NULL;					//set node next ke NULL
 	}
 	
 	return node;							//mengembalikan pointer ke node baru
 }
 
 //Fungsi untuk memasukkan kata slang ke dalam trie
-void insert(struct trieNode *root, char *key){
+void insert(struct trieNode *root, char *key, char *desc){
 	struct trieNode *current = root;		//alokasi memori untuk new node
-	
 	int length = strlen(key);				//mencari panjang kata slang
 	
 	for(int i = 0; i < length; i++){
@@ -69,43 +66,52 @@ void insert(struct trieNode *root, char *key){
 	}
 	
 	current->isEndOfWord = true;			//menandakan akhir kata dari slang
-}
-
-//Fungsi untuk memasukkan deskripsi kata slang ke dalam trie
-void insertDesc(struct descTrieNode *root, char *desc){
-	struct descTrieNode *current = root;	//alokasi memori untuk new node
 	
-	int length = strlen(desc);				//mencari panjang kata deskripsi
+	struct descNode *newDescNode = createDescNode(desc);	//aolikasi memori untuk new node deskripsi
+	
+	//Menambahkan deskripsi ke dalam linked list deskripsi jika tidak ada deskripsi yang tersimpan sebelumnya
+	if(!current->descHead){
+		current->descHead = newDescNode;	//menambahkan deskripsi baru sebagai head
+	} else {
+		//jika sudah ada deskripsi sebelumnya, cari node terakhir dari linked link deskripsi
+		struct descNode *temp = current->descHead;
 		
-	for(int i = 0; i < length; i++){
-		int index = desc[i] - 'A';			//menghitung indeks berdasarkan karakter
-		
-		if(!current->children[index]){		//jika node belum ada
-			current->children[index] = createDescNode();	//buat new node
+		//selama node bukan yang terakhir, maka terus cari
+		while(temp->next != NULL){
+			temp = temp->next;
 		}
 		
-		current = current->children[index];	//pindahkan ke node selanjutnya
+		//setelah menemukan node terakhir, tambah deskripsi sebagai node berikutnya
+		temp->next = newDescNode;
 	}
-	
-	current->isEndOfDesc = true;			//menandakan akhir dari deskripsi
 }
 
-//Fungsi untuk mencari kata slang di dalam title
-bool search(struct trieNode *root, char *key){
-	struct trieNode *current = root;		//alokasi memori untuk new node
-	int length = strlen(key);				//menghitung panjang kata slang
+//Funsgi untuk mencari deskripsi dari sebuah kata slang
+char *searchDesc(struct trieNode *root, char *key){
+	struct trieNode *current = root;			//node ke new root
+	int length = strlen(key);					//mencari panjang kata slang yang dicari
 	
+	//iterasi setiap kata dalam slang
 	for(int i = 0; i < length; i++){
-		int index = key[i] - 'A';			//menghitung indeks berdasarkan karakter
+		int index = key[i] - 'A';				//hitung indeks berdasarkan karakter
 		
-		if(!current->children[index]){		//jika node child tidak ada
-			return false;					//maka kembalikan nilai dengan false, yang artinya kata tidak ditemukan dalam trie
+		//jika node child tidak ditemukan, maka kembalikan nilai NULL
+		if(!current->children[index]){
+			return NULL;
 		}
 		
-		current = current->children[index];	//pindahkan ke node selanjutnya
+		current = current->children[index];		//pindahkan node yang sekarang ke node child berikutnya
 	}
 	
-	return (current != NULL && current->isEndOfWord);	//kata slang ditemukan jika nilai saat ini tidak NULL dan isEndOfWord true (data ditemukan)
+	//Jika node ditemukan dan merupakan akhir dari kata slang
+	if(current != NULL && current->isEndOfWord){
+		//jika ada deskripsi
+		if(current->descHead != NULL){
+			return current->descHead->description;	//mengembalikan nilai deskripsi tersebut
+		} else {
+			return NULL;
+		}
+	}
 }
 
 //Fungsi untuk mencetak semua kata slang dalam trie
@@ -203,12 +209,26 @@ void menu(){
 	printf(">> ");
 }
 
+//Fungsi untuk menghitung jumlah spasi dalam sebuah string
+int wordReq(char *str){
+	int length = strlen(str);				//mencari panjang string
+	int counter = 0;						//inisialisasi counter untuk menghitung jumlah spasi dalam string
+	
+	//iterasi untuk menghitung spasi melalui setiap karakter dalam string
+	for(int i = 0; i < length; i++){
+		if(str[i] == ' '){					//jika karakter adalah spasi
+			counter++;						//maka tambah nilai counter
+		}
+	}
+	
+	return counter;							//mengembalikan jumlah spasi dalam string
+}
+
 int main(){
 	struct trieNode *root = createNode();				//membuat trie untuk kata slang
-	struct descTrieNode *descRoot = createDescNode();	//membuat trie untuk deskripsi
 	
 	int choice;											//variabel untuk menyimpan pilihan menu
-	char desc[100], searchWord[100], searchPrefix1[100];//variabel untuk deskripsi, kata yang dicari, dan awalan yang dicari
+	char word[100], desc[100], searchWord[100], searchPrefix1[100];	//variabel untuk deskripsi, kata yang dicari, dan awalan yang dicari
 	
 	//looping menu utama
 	while(true){
@@ -217,19 +237,27 @@ int main(){
 		
 		switch(choice){
 			//menu untuk menambah kata slang baru
-			case 1:{									
-				do{
+			case 1:{
+			
+				printf("Input a new slang word [Must be more than 1 characters and contains no space]: ");
+				scanf("%s", word); getchar();			//menerima input kata slang yang baru					
+				
+				//validasi menambah kata slang dengan syarat minimal kata 2, dan tidak ada spasi dalam kata tersebut
+				while(strlen(word) <= 1 && strchr(word, ' ') == 0){
 					printf("Input a new slang word [Must be more than 1 characters and contains no space]: ");
-					scanf("%s", word); getchar();
-				} while(strlen(word) <= 1 && strchr(word, ' ') == 0); //validasi menambah kata slang dengan syarat minimal kata 2, dan tidak ada spasi dalam kata tersebut
+					scanf("%s", word); getchar();		//meminta input ulang apabila validasi tidak terpenuhi
+				} 
 				
-				do{										//menu untuk menambah deskripsi
+				printf("Input a new slang word description [Must be more than 2 words ]: ");
+				scanf("%[^\]", desc); getchar();		//menerima input deskripsi kata slang yang baru
+				
+				//validasi menambah deskripsi dengan syarat harus memiliki lebih dari 2 kata
+				while(wordReq(desc) < 1){									
 					printf("Input a new slang word description [Must be more than 2 words ]: ");
-					scanf("%s", desc); getchar();
-				} while(strlen(desc) <= 2);				//validasi deskripsi dengan minimal 3 huruf
+					scanf("%[^\n]", desc); getchar();	//meminta input ulang jika validasi tidak terpenuhi
+				}
 				
-				insertDesc(descRoot, desc);				//memasukkan deskripsi ke trie
-				insert(root, word);						//memasukkan kata slang ke trie
+				insert(root, word, desc);				//memasukkan kata slang dan deskripsi ke dalam trie
 				
 				printf("Succesfully released new slang word.\n");	//output bahwa kata slang dan deskripsi duah berhasil masuk ke trie
 				system("pause");						//menunggu input sebelum melanjutkan aksi
@@ -241,11 +269,19 @@ int main(){
 				printf("Input a slang word to be searched [Must be more than 1 characters and contains no space]: ");
 				scanf("%s", searchWord); getchar();		//menerima input kata slang yang dicari
 				
-				if(!search(root, searchWord)){			//jika kata slang tidak ditemukan
+				while(strlen(searchWord) < 2 && strchr(searchWord, ' ') == 0){
+					printf("Input a slang word to be searched [Must be more than 1 characters and contains no space]: ");
+					scanf("%s", searchWord); getchar();		//menerima input kata slang yang dicari
+				}
+				
+				if(!searchDesc(root, searchWord)){			//jika kata slang tidak ditemukan
 					printf("There is no word '%s' in the dictionary.\n", searchWord);
-				} else {								//jika ditemukan
+				} else {									//jika ditemukan
 					printf("Slang word: %s\n", searchWord);	//mencetak kata slang
-					printf("Description: %s\n", desc);		//mencetak deskripsi
+					
+					char *wordDesc = searchDesc(root, searchWord);	//mencari deskripsi dari kata slang yang diinginkan
+					
+					printf("Description: %s\n", wordDesc);		//mencetak deskripsi yang ditemukan
 				}
 				system("pause");						//menunggu input sebelum melanjutkan aksi
 				break;
