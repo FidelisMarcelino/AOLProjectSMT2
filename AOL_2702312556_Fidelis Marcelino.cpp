@@ -6,7 +6,7 @@
 #define CHAR_SIZE 256		// mendefinisikan ukuran karakter, 256 karakter menandakan karakter ASCII
 int count = 1;				// Variabel untuk menghitung jumlah kata slang
 
-//Struktur node dalam trie unutk menyimpan deskripsi kata slang
+//Struktur node dalam trie untuk menyimpan deskripsi kata slang
 struct descNode{			
 	char description[100];	//array untuk menyimpan deskripsi
 	struct descNode *next;	//pointer descNode untuk menunjuk ke struktur berikutnya dan membentuk link list
@@ -67,7 +67,7 @@ void insert(struct trieNode *root, char *key, char *desc){
 	
 	current->isEndOfWord = true;			//menandakan akhir kata dari slang
 	
-	struct descNode *newDescNode = createDescNode(desc);	//aolikasi memori untuk new node deskripsi
+	struct descNode *newDescNode = createDescNode(desc);	//alokasi memori untuk new node deskripsi
 	
 	//Menambahkan deskripsi ke dalam linked list deskripsi jika tidak ada deskripsi yang tersimpan sebelumnya
 	if(!current->descHead){
@@ -84,9 +84,11 @@ void insert(struct trieNode *root, char *key, char *desc){
 		//setelah menemukan node terakhir, tambah deskripsi sebagai node berikutnya
 		temp->next = newDescNode;
 	}
+	
+	strcpy(current->descHead->description, desc);
 }
 
-//Funsgi untuk mencari deskripsi dari sebuah kata slang
+//Fungsi untuk mencari deskripsi dari sebuah kata slang
 char *searchDesc(struct trieNode *root, char *key){
 	struct trieNode *current = root;			//node ke new root
 	int length = strlen(key);					//mencari panjang kata slang yang dicari
@@ -127,7 +129,7 @@ void printTrie(struct trieNode *node, char *buffer, int depth){
 		
 		buffer[depth] = '\0';				//menambahkan NULL terminator untuk mengakhiri string yang disimpan dalam buffer
 		printf("%d. %s\n",count, buffer);	//mencetak nomor urut dan kata slang yang disimpan di buffer
-		count++;							//menambah nilai dari variabel count untuk menandai nomer urut berikutnya
+		count++;							//menambah nilai dari variabel count untuk menandai nomor urut berikutnya
 	}
 	
 	for(int i = 0; i < CHAR_SIZE; i++){		//iterasi semua node child
@@ -250,16 +252,21 @@ int main(){
 				
 				printf("Input a new slang word description [Must be more than 2 words ]: ");
 				scanf("%[^\]", desc); getchar();		//menerima input deskripsi kata slang yang baru
-				
+					
 				//validasi menambah deskripsi dengan syarat harus memiliki lebih dari 2 kata
-				while(wordReq(desc) < 1){									
+				while(wordReq(desc) < 2){									
 					printf("Input a new slang word description [Must be more than 2 words ]: ");
 					scanf("%[^\n]", desc); getchar();	//meminta input ulang jika validasi tidak terpenuhi
 				}
+								
+				if(searchDesc(root, word)){
+					printf("Successfully updated a slang word.\n");	//output bahwa kata slang dan deskripsi duah berhasil masuk ke trie					
+				} else {
+					printf("Successfully released new slang word.\n");	//output bahwa kata slang dan deskripsi duah berhasil masuk ke trie
+				}
 				
-				insert(root, word, desc);				//memasukkan kata slang dan deskripsi ke dalam trie
+				insert(root, word, desc);				//memasukkan kata slang dan deskripsi ke dalam trie			
 				
-				printf("Succesfully released new slang word.\n");	//output bahwa kata slang dan deskripsi duah berhasil masuk ke trie
 				system("pause");						//menunggu input sebelum melanjutkan aksi
 				break;
 			}
