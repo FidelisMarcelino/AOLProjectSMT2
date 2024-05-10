@@ -85,7 +85,7 @@ void insert(struct trieNode *root, char *key, char *desc){
 		temp->next = newDescNode;
 	}
 	
-	strcpy(current->descHead->description, desc);
+	strcpy(current->descHead->description, desc);	//menyalin nilai dari trie current->descHead->description ke variabel desc
 }
 
 //Fungsi untuk mencari deskripsi dari sebuah kata slang
@@ -260,9 +260,9 @@ int main(){
 				}
 								
 				if(searchDesc(root, word)){
-					printf("Successfully updated a slang word.\n");	//output bahwa kata slang dan deskripsi duah berhasil masuk ke trie					
+					printf("Successfully updated a slang word.\n");	//output bahwa kata slang dan deskripsi lama berhasil di update dan masuk ke trie
 				} else {
-					printf("Successfully released new slang word.\n");	//output bahwa kata slang dan deskripsi duah berhasil masuk ke trie
+					printf("Successfully released new slang word.\n");	//output bahwa kata slang dan deskripsi baru berhasil masuk ke trie
 				}
 				
 				insert(root, word, desc);				//memasukkan kata slang dan deskripsi ke dalam trie			
